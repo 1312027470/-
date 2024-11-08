@@ -7,9 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
+
 
 # 读取数据，以分号为分隔符
 file_path = '作业\winequality-red.csv'
