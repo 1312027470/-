@@ -1,0 +1,78 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.preprocessing import LabelEncoder
+
+# 读入数据源
+data = pd.read_csv('作业\药物处方规律挖掘\DRUG.txt')
+
+# 浏览数据内容
+print(data.head())
+
+# 类型设置
+data['Age'] = data['Age'].astype(int)
+data['Na'] = data['Na'].astype(float)
+data['K'] = data['K'].astype(float)
+
+# 将分类变量转换为虚拟变量
+data = pd.get_dummies(data, columns=['Sex', 'BP', 'Cholesterol'], drop_first=True)
+
+# 观察变量数据分布
+data.hist(bins=50, figsize=(20, 15))
+plt.show()
+
+# 目标变量的占比情况
+print(data['Drug'].value_counts(normalize=True))
+
+# 移除目标变量
+data_without_target = data.drop('Drug', axis=1)
+
+# 使用热力图显示相关性
+plt.figure(figsize=(10, 8))
+sns.heatmap(data_without_target.corr(), annot=True, cmap='coolwarm')
+plt.show()
+
+# 计算相关性矩阵
+corr_matrix = data_without_target.corr()
+
+# 显示相关性矩阵
+print(corr_matrix)
+
+# 生成新特征
+data['Na_K_Ratio'] = data['Na'] / data['K']
+
+# 将目标变量转换为数值型数据
+le = LabelEncoder()
+data['Drug'] = le.fit_transform(data['Drug'])
+
+# 计算新特征与目标变量的相关性
+print(data[['Na_K_Ratio', 'Drug']].corr())
+
+# 2.3 建模-深入分析
+
+# 1) 建模准备
+X = data.drop('Drug', axis=1)
+y = data['Drug']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 2) 建模-特征选择
+selector = SelectKBest(score_func=f_classif, k='all')
+selector.fit(X_train, y_train)
+
+# 显示每个特征的得分
+print(selector.scores_)
+
+# 3) 建模-C5.0构建分类树
+model = DecisionTreeClassifier(criterion='entropy', random_state=42)
+model.fit(X_train, y_train)
+
+# 4) 模型评估与解读
+y_pred = model.predict(X_test)
+
+# 评估模型
+print(confusion_matrix(y_test, y_pred))
+print(classification_report(y_test, y_pred))
